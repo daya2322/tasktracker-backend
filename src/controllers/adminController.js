@@ -2,6 +2,7 @@ const bcrypt = require("bcryptjs");
 const db = require("../config/db");
 
 
+
 exports.createCompany = async (req, res) => {
   try {
     const { company_name, name, email, password, phone } = req.body;
@@ -13,37 +14,45 @@ exports.createCompany = async (req, res) => {
       });
     }
 
-    const [existing] = await db.query(
-      "SELECT id FROM users WHERE email = ?",
-      [email]
-    );
+  //   const [existing] = await db.query(
+  //     "SELECT id FROM users WHERE email = ?",
+  //     [email]
+  //   );
 
-    if (existing.length > 0) {
-      return res.status(400).json({
-        status: false,
-        message: "Email already exists",
-      });
-    }
+  // console.log(existing)
 
-    const [[companyRole]] = await db.query(
-      "SELECT id FROM roles WHERE name = 'company'"
-    );
 
-    if (!companyRole) {
-      return res.status(500).json({
-        status: false,
-        message: "Company role not found",
-      });
-    }
+  //   if (existing.length > 0) {
+  //     return res.status(400).json({
+  //       status: false,
+  //       message: "Email already exists",
+  //     });
+  //   }
+
+    // const [[companyRole]] = await db.query(
+    //   "SELECT id FROM roles WHERE name = 'Company'"
+    // );
+
+    // console.log(companyRole)
+
+    // if (!companyRole) {
+    //   return res.status(500).json({
+    //     status: false,
+    //     message: "Company role not found",
+    //   });
+    // }
 
     const [companyResult] = await db.query(
-      "INSERT INTO companies (name) VALUES (?)",
+      "SELECT * FROM roles WHERE name = (?)",
       [company_name]
     );
 
-    const companyId = companyResult.insertId;
+    // console.log(companyResult)
+
+    // const companyId = companyResult.insertId;
 
     const hashedPassword = await bcrypt.hash(password, 10);
+
 
     await db.query(
       `INSERT INTO users (name, email, password, phone, role_id, company_id)
