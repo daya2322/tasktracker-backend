@@ -5,19 +5,25 @@ const db = require("../config/db");
 
 exports.createCompany = async (req, res) => {
   try {
-    const { company_name, name, email, password, phone } = req.body;
-
-    if (!company_name || !name || !email || !password) {
+    const { name, email, password, phone } = req.body;
+    console.log("Received data:", { name, email, password, phone });
+    console.log("Request user:", req.user);
+    if (!name || !email || !password) {
       return res.status(400).json({
         status: false,
         message: "All fields are required",
       });
     }
-
-  //   const [existing] = await db.query(
-  //     "SELECT id FROM users WHERE email = ?",
-  //     [email]
-  //   );
+    var role_id=3;
+    if(req.user.role === "Admin"){
+      role_id=2;
+    }else if(req.user.role === "Company"){
+      role_id=3;
+    }
+    const [existing] = await db.query(
+      "SELECT id FROM users WHERE email = ?",
+      [email]
+    );
 
   // console.log(existing)
 
@@ -29,41 +35,21 @@ exports.createCompany = async (req, res) => {
   //     });
   //   }
 
-    // const [[companyRole]] = await db.query(
-    //   "SELECT id FROM roles WHERE name = 'Company'"
-    // );
-
-    // console.log(companyRole)
-
-    // if (!companyRole) {
-    //   return res.status(500).json({
-    //     status: false,
-    //     message: "Company role not found",
-    //   });
-    // }
-
-    const [companyResult] = await db.query(
-      "SELECT * FROM roles WHERE name = (?)",
-      [company_name]
+    const [[companyRole]] = await db.query(
+      "SELECT id FROM roles WHERE name = 'company'"
     );
-
-    // console.log(companyResult)
-
-    // const companyId = companyResult.insertId;
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-
-    await db.query(
-      `INSERT INTO users (name, email, password, phone, role_id, company_id)
-       VALUES (?, ?, ?, ?, ?, ?)`,
+    const datas=await db.query(
+      `INSERT INTO users (name, email, password, phone, role_id)
+       VALUES (?, ?, ?, ?, ?)`,
       [
         name,
         email,
         hashedPassword,
         phone || null,
-        companyRole.id,
-        companyId,
+        role_id,
       ]
     );
 
@@ -71,12 +57,14 @@ exports.createCompany = async (req, res) => {
       status: true,
       message: "Company created successfully",
       data: {
-        company_id: companyId,
-        company_name,
-        company_admin: email,
-      },
+        id: datas[0].insertId,
+        name,
+        email,
+        phone,
+      }
     });
   } catch (error) {
+    console.error("Error creating company:", error);
     return res.status(500).json({
       status: false,
       message: error.message,
