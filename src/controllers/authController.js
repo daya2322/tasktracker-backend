@@ -21,7 +21,6 @@ exports.loginUser = async (req, res) => {
         u.email,
         u.password,
         u.phone,
-        u.company_id,
         r.name AS role
        FROM users u
        JOIN roles r ON u.role_id = r.id
@@ -50,7 +49,6 @@ exports.loginUser = async (req, res) => {
       {
         id: user.id,
         role: user.role,
-        company_id: user.company_id,
       },
       process.env.JWT_SECRET,
       { expiresIn: "1d" }
@@ -66,7 +64,6 @@ exports.loginUser = async (req, res) => {
         email: user.email,
         phone: user.phone,
         role: user.role,
-        company_id: user.company_id,
       },
     });
   } catch (error) {
@@ -85,7 +82,6 @@ exports.getMe = async (req, res) => {
         u.name,
         u.email,
         u.phone,
-        u.company_id,
         r.name AS role,
         u.created_at
        FROM users u
