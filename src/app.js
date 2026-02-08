@@ -17,5 +17,4 @@ app.use("/api/master/auth", authRoutes);
 app.use("/api/attendance", attendanceRoutes);
 app.use("/api/location", require("./routes/locationRoute"));
 
-
 module.exports = app;

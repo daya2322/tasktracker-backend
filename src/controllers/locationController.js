@@ -20,17 +20,27 @@ exports.reverseGeocode = async (req, res) => {
           lon: longitude,
         },
         headers: {
-          "User-Agent": "TaskTracker/1.0 (support@tasktracker.com)",
+          // REQUIRED by Nominatim policy
+          "User-Agent": "TaskTracker/1.0 (contact@tasktracker.com)",
         },
+        timeout: 10000,
       }
     );
 
-    return res.json({
+    if (!response.data?.display_name) {
+      return res.status(404).json({
+        status: false,
+        message: "Address not found",
+      });
+    }
+
+    return res.status(200).json({
       status: true,
       address: response.data.display_name,
     });
-  } catch (err) {
-    console.error("Reverse Geocode Error:", err.message);
+  } catch (error) {
+    console.error("Reverse Geocode Error:", error.message);
+
     return res.status(500).json({
       status: false,
       message: "Failed to fetch address",

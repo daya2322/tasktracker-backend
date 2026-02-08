@@ -1,10 +1,11 @@
-const Attendance = require("../models/Attendance");
+const db = require("../config/db");
 
-
+/* ================= HELPERS ================= */
 const getTodayDate = () => {
   return new Date().toISOString().slice(0, 10);
 };
 
+/* ================= PUNCH IN ================= */
 exports.punchIn = async (req, res) => {
   try {
     const { address } = req.body;
@@ -18,30 +19,37 @@ exports.punchIn = async (req, res) => {
       });
     }
 
-    const existing = await Attendance.findOne({
-      user: userId,
-      date: today,
-    });
+    const [rows] = await db.query(
+      "SELECT * FROM attendance WHERE user_id = ? AND date = ?",
+      [userId, today]
+    );
 
-    if (existing?.punchIn) {
+    if (rows.length && rows[0].punch_in) {
       return res.status(400).json({
         status: false,
         message: "You have already punched in today",
       });
     }
 
-    const attendance = await Attendance.create({
-      user: userId,
-      date: today,
-      punchIn: new Date(),
-      punchInAddress: address,
-      status: "PUNCHED_IN",
-    });
+    if (rows.length === 0) {
+      await db.query(
+        `INSERT INTO attendance 
+         (user_id, date, punch_in, punch_in_address, status)
+         VALUES (?, ?, NOW(), ?, 'PUNCHED_IN')`,
+        [userId, today, address]
+      );
+    } else {
+      await db.query(
+        `UPDATE attendance 
+         SET punch_in = NOW(), punch_in_address = ?, status = 'PUNCHED_IN'
+         WHERE user_id = ? AND date = ?`,
+        [address, userId, today]
+      );
+    }
 
     return res.status(200).json({
       status: true,
       message: "Punch in successful",
-      data: attendance,
     });
   } catch (error) {
     console.error("Punch In Error:", error);
@@ -52,6 +60,7 @@ exports.punchIn = async (req, res) => {
   }
 };
 
+/* ================= PUNCH OUT ================= */
 exports.punchOut = async (req, res) => {
   try {
     const { address } = req.body;
@@ -65,35 +74,35 @@ exports.punchOut = async (req, res) => {
       });
     }
 
-    const attendance = await Attendance.findOne({
-      user: userId,
-      date: today,
-    });
+    const [rows] = await db.query(
+      "SELECT * FROM attendance WHERE user_id = ? AND date = ?",
+      [userId, today]
+    );
 
-    if (!attendance || !attendance.punchIn) {
+    if (!rows.length || !rows[0].punch_in) {
       return res.status(400).json({
         status: false,
         message: "You have not punched in today",
       });
     }
 
-    if (attendance.punchOut) {
+    if (rows[0].punch_out) {
       return res.status(400).json({
         status: false,
         message: "You have already punched out today",
       });
     }
 
-    attendance.punchOut = new Date();
-    attendance.punchOutAddress = address;
-    attendance.status = "PUNCHED_OUT";
-
-    await attendance.save();
+    await db.query(
+      `UPDATE attendance 
+       SET punch_out = NOW(), punch_out_address = ?, status = 'PUNCHED_OUT'
+       WHERE user_id = ? AND date = ?`,
+      [address, userId, today]
+    );
 
     return res.status(200).json({
       status: true,
       message: "Punch out successful",
-      data: attendance,
     });
   } catch (error) {
     console.error("Punch Out Error:", error);
@@ -104,19 +113,23 @@ exports.punchOut = async (req, res) => {
   }
 };
 
+/* ================= GET TODAY ================= */
 exports.getTodayAttendance = async (req, res) => {
   try {
     const userId = req.user.id;
     const today = getTodayDate();
 
-    const attendance = await Attendance.findOne({
-      user: userId,
-      date: today,
-    }).populate("user", "name email");
+    const [rows] = await db.query(
+      `SELECT a.*, u.name, u.email
+       FROM attendance a
+       JOIN users u ON u.id = a.user_id
+       WHERE a.user_id = ? AND a.date = ?`,
+      [userId, today]
+    );
 
     return res.status(200).json({
       status: true,
-      data: attendance || null,
+      data: rows.length ? rows[0] : null,
     });
   } catch (error) {
     console.error("Get Attendance Error:", error);
@@ -127,23 +140,28 @@ exports.getTodayAttendance = async (req, res) => {
   }
 };
 
+/* ================= HISTORY ================= */
 exports.getAttendanceHistory = async (req, res) => {
   try {
     const userId = req.user.id;
     const { from, to } = req.query;
 
-    const filter = { user: userId };
+    let query = "SELECT * FROM attendance WHERE user_id = ?";
+    const params = [userId];
 
     if (from && to) {
-      filter.date = { $gte: from, $lte: to };
+      query += " AND date BETWEEN ? AND ?";
+      params.push(from, to);
     }
 
-    const records = await Attendance.find(filter).sort({ date: -1 });
+    query += " ORDER BY date DESC";
+
+    const [rows] = await db.query(query, params);
 
     return res.status(200).json({
       status: true,
-      count: records.length,
-      data: records,
+      count: rows.length,
+      data: rows,
     });
   } catch (error) {
     console.error("Attendance History Error:", error);
