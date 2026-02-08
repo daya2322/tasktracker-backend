@@ -2,56 +2,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const db = require("../config/db");
 
-/* ================= REGISTER ================= */
-exports.registerUser = async (req, res) => {
-  try {
-    const { name, email, password } = req.body;
 
-    if (!name || !email || !password) {
-      return res.status(400).json({
-        status: false,
-        message: "All fields are required",
-      });
-    }
-
-    // Check existing user
-    const [existing] = await db.query(
-      "SELECT id FROM users WHERE email = ?",
-      [email]
-    );
-
-    if (existing.length > 0) {
-      return res.status(400).json({
-        status: false,
-        message: "Email already exists",
-      });
-    }
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    const [result] = await db.query(
-      "INSERT INTO users (name, email, password) VALUES (?, ?, ?)",
-      [name, email, hashedPassword]
-    );
-
-    return res.status(201).json({
-      status: true,
-      message: "Registration successful",
-      user: {
-        id: result.insertId,
-        name,
-        email,
-      },
-    });
-  } catch (error) {
-    return res.status(500).json({
-      status: false,
-      message: error.message,
-    });
-  }
-};
-
-/* ================= LOGIN ================= */
 exports.loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -64,7 +15,17 @@ exports.loginUser = async (req, res) => {
     }
 
     const [rows] = await db.query(
-      "SELECT * FROM users WHERE email = ?",
+      `SELECT 
+        u.id,
+        u.name,
+        u.email,
+        u.password,
+        u.phone,
+        u.company_id,
+        r.name AS role
+       FROM users u
+       JOIN roles r ON u.role_id = r.id
+       WHERE u.email = ?`,
       [email]
     );
 
@@ -86,7 +47,11 @@ exports.loginUser = async (req, res) => {
     }
 
     const token = jwt.sign(
-      { id: user.id, email: user.email },
+      {
+        id: user.id,
+        role: user.role,
+        company_id: user.company_id,
+      },
       process.env.JWT_SECRET,
       { expiresIn: "1d" }
     );
@@ -99,6 +64,9 @@ exports.loginUser = async (req, res) => {
         id: user.id,
         name: user.name,
         email: user.email,
+        phone: user.phone,
+        role: user.role,
+        company_id: user.company_id,
       },
     });
   } catch (error) {
@@ -109,11 +77,20 @@ exports.loginUser = async (req, res) => {
   }
 };
 
-/* ================= GET ME ================= */
 exports.getMe = async (req, res) => {
   try {
     const [rows] = await db.query(
-      "SELECT id, name, email, created_at FROM users WHERE id = ?",
+      `SELECT 
+        u.id,
+        u.name,
+        u.email,
+        u.phone,
+        u.company_id,
+        r.name AS role,
+        u.created_at
+       FROM users u
+       JOIN roles r ON u.role_id = r.id
+       WHERE u.id = ?`,
       [req.user.id]
     );
 
@@ -136,7 +113,7 @@ exports.getMe = async (req, res) => {
   }
 };
 
-/* ================= LOGOUT ================= */
+
 exports.logoutUser = async (req, res) => {
   return res.status(200).json({
     status: true,
