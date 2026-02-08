@@ -3,7 +3,6 @@ const db = require("../config/db");
 
 
 exports.createCompany = async (req, res) => {
-
   try {
     const { name, email, password, phone } = req.body;
     console.log("Received data:", { name, email, password, phone });
