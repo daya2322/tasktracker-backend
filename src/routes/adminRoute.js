@@ -8,8 +8,7 @@ const { allowRoles } = require("../middleware/role");
 router.post(
   "/create-company",
   protect,
-  allowRoles("admin"),
+  // allowRoles("Admin"),
   createCompany
 );
-
 module.exports = router;
