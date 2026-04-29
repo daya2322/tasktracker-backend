@@ -1,58 +1,3 @@
-/**
- * settingsRoutes.js
- * Mount at:  app.use("/api/admin/settings", settingsRoutes);
- *
- * All routes require:
- *   • auth.protect     — valid JWT
- *   • allowRoles("Admin") — super-admin only
- *
- * Endpoint map
- * ─────────────────────────────────────────────────────────────────────────────
- *  GENERAL
- *    GET    /general
- *    PUT    /general
- *
- *  SECURITY
- *    GET    /security
- *    PUT    /security
- *
- *  NOTIFICATIONS
- *    GET    /notifications
- *    PUT    /notifications
- *
- *  BILLING
- *    GET    /billing/overview          ← revenue stats (MRR, ARR …)
- *    GET    /billing/gateway
- *    PUT    /billing/gateway
- *
- *  INTEGRATIONS
- *    GET    /integrations
- *    POST   /integrations/:name/toggle
- *    GET    /integrations/webhook
- *    PUT    /integrations/webhook
- *
- *  APPEARANCE
- *    GET    /appearance
- *    PUT    /appearance
- *
- *  API KEYS
- *    GET    /api-keys
- *    POST   /api-keys
- *    DELETE /api-keys/:id
- *    GET    /api-keys/rate-limits
- *    PUT    /api-keys/rate-limits
- *
- *  BACKUP
- *    GET    /backup/config
- *    PUT    /backup/config
- *    GET    /backup/history
- *    POST   /backup/run
- *    POST   /backup/verify
- *
- *  DANGER ZONE
- *    DELETE /reset
- * ─────────────────────────────────────────────────────────────────────────────
- */
 
 const express       = require("express");
 const router        = express.Router();
@@ -60,7 +5,7 @@ const auth          = require("../middleware/auth");
 const { allowRoles } = require("../middleware/role");
 const s             = require("../controllers/settingsController");
 
-// ── Middleware applied to every settings route ────────────────────────────────
+
 router.use(auth.protect, allowRoles("Admin"));
 
 // ── 1. General ────────────────────────────────────────────────────────────────
