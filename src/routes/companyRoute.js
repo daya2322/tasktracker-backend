@@ -1,15 +1,18 @@
 const express = require("express");
 const router = express.Router();
 
-const { createEmployee } = require("../controllers/companyController");
-const { protect } = require("../middleware/auth");
-const { allowRoles } = require("../middleware/role");
+const {
+  createCompany,
+  getCompanies,
+  toggleSuspend,
+  deleteCompany,
+} = require("../controllers/companyController");
 
-router.post(
-  "/create-employee",
-  protect,
-  allowRoles("company"),
-  createEmployee
-);
+const auth = require("../middleware/auth");
+
+router.get("/companies",              auth.protect, getCompanies);
+router.post("/companies/create",      auth.protect, createCompany);
+router.patch("/companies/:id/suspend", auth.protect, toggleSuspend);
+router.delete("/companies/:id",        auth.protect, deleteCompany);
 
 module.exports = router;

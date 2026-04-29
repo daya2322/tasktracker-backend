@@ -7,11 +7,13 @@ const {
   logoutUser,
 } = require("../controllers/authController");
 
-const { protect } = require("../middleware/auth");
+// const { protect } = require("../middleware/auth");
+const auth = require("../middleware/auth");
+
 
 
 router.post("/login", loginUser);
-router.get("/me", protect, getMe);
-router.post("/logout", protect, logoutUser);
+router.get("/me", auth.protect, getMe);
+router.post("/logout", auth.protect, logoutUser);
 
 module.exports = router;

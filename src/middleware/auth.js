@@ -1,29 +1,92 @@
+// const jwt = require("jsonwebtoken");
+
+// exports.protect = (req, res, next) => {
+//   let token;
+
+//   if (
+//     req.headers.authorization &&
+//     req.headers.authorization.startsWith("Bearer ")
+//   ) {
+//     token = req.headers.authorization.split(" ")[1];
+//   }
+
+//   if (!token) {
+//     return res.status(401).json({
+//       status: false,
+//       message: "Authorization token missing",
+//     });
+//   }
+
+//   try {
+//     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+//     req.user = {
+//       id: decoded.id,
+//       role: decoded.role,
+//       company_id: decoded.company_id || null,
+//     };
+
+//     next();
+//   } catch (error) {
+//     return res.status(401).json({
+//       status: false,
+//       message: "Invalid or expired token",
+//     });
+//   }
+// };
+// const jwt = require("jsonwebtoken");
+
+// exports.protect = (req, res, next) => {
+//   try {
+//     const authHeader = req.headers.authorization;
+
+//     if (!authHeader || !authHeader.startsWith("Bearer ")) {
+//       return res.status(401).json({
+//         status: false,
+//         message: "Authorization token missing or invalid format",
+//       });
+//     }
+
+//     const token = authHeader.split(" ")[1];
+
+//     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+//     req.user = {
+//       id: decoded.id,
+//       role: decoded.role,
+//       company_id: decoded.company_id ?? null,
+//     };
+
+//     next();
+//   } catch (error) {
+//     return res.status(401).json({
+//       status: false,
+//       message: "Invalid or expired token",
+//     });
+//   }
+// };
+
 const jwt = require("jsonwebtoken");
 
-exports.protect = (req, res, next) => {
-  let token;
-
-  if (
-    req.headers.authorization &&
-    req.headers.authorization.startsWith("Bearer ")
-  ) {
-    token = req.headers.authorization.split(" ")[1];
-  }
-
-  if (!token) {
-    return res.status(401).json({
-      status: false,
-      message: "Authorization token missing",
-    });
-  }
-
+const protect = (req, res, next) => {
   try {
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({
+        status: false,
+        message: "Authorization token missing or invalid format",
+      });
+    }
+
+    const token = authHeader.split(" ")[1];
+
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     req.user = {
       id: decoded.id,
       role: decoded.role,
-      company_id: decoded.company_id || null,
+      company_id: decoded.company_id ?? null,
     };
 
     next();
@@ -34,3 +97,5 @@ exports.protect = (req, res, next) => {
     });
   }
 };
+
+module.exports = { protect }; // ✅ FIX

@@ -1,15 +1,19 @@
 const express = require("express");
 const router = express.Router();
-
-const { protect } = require("../middleware/auth");
 const attendanceController = require("../controllers/attendanceController");
+// const { protect } = require("../middleware/auth"); // your JWT middleware
+const auth = require("../middleware/auth");
 
-router.post("/punch-in", protect, attendanceController.punchIn);
 
-router.post("/punch-out", protect, attendanceController.punchOut);
+/* ── Write ── */
+router.post("/punch-in",  auth.protect, attendanceController.punchIn);
+router.post("/punch-out", auth.protect, attendanceController.punchOut);
 
-router.get("/today", protect, attendanceController.getTodayAttendance);
-
-router.get("/history", protect, attendanceController.getAttendanceHistory);
+/* ── Read ── */
+router.get("/today",            auth.protect, attendanceController.getTodayAttendance);
+router.get("/dashboard-summary",auth.protect, attendanceController.getDashboardSummary);
+router.get("/history",          auth.protect, attendanceController.getAttendanceHistory);
+router.get("/recent-activity",  auth.protect, attendanceController.getRecentActivity);
+router.get("/monthly-overview", auth.protect, attendanceController.getMonthlyOverview);
 
 module.exports = router;

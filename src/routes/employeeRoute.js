@@ -6,19 +6,21 @@ const {
   employeeDashboard,
 } = require("../controllers/employeeController");
 
-const { protect } = require("../middleware/auth");
+// const { protect } = require("../middleware/auth");
+const auth = require("../middleware/auth");
+
 const { allowRoles } = require("../middleware/role");
 
 router.get(
   "/me",
-  protect,
+  auth.protect,
   allowRoles("employee"),
   getMyProfile
 );
 
 router.get(
   "/dashboard",
-  protect,
+  auth.protect,
   allowRoles("employee"),
   employeeDashboard
 );
